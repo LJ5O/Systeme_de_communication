@@ -25,7 +25,7 @@ redisClient.on('error', (err) => {
 app.use(session({
     secret: 'SECRET_A_CHANGER',
     //J'indique à express-session de stocker les sessions en cours dans Redis
-    store: new redisStore({ host: 'localhost', port: 6379, client: redisClient, ttl :  86000}),
+    store: new redisStore({ host: '127.0.0.1', port: 6379, client: redisClient, ttl :  86000}),
     saveUninitialized: true,
     resave: false
 }));
