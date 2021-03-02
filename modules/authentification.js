@@ -33,6 +33,9 @@ module.exports = {
                 }else{
                   //Tout s'est bien passé, return
                   //Rediriger vers l'app
+                  req.session.pseudo = pseudo;
+                  req.session.save();
+                  res.redirect('/app');
                 }
               });
             });
@@ -66,6 +69,9 @@ module.exports = {
               if(result){
                 //Connection acceptée
                 console.log("OK");
+                req.session.pseudo = results[0].pseudo;//Le pseudo en BDD est enregistré dans la session
+                req.session.save();
+                res.redirect('/app');
               }else{
                 //Erreur de MDP
                 console.log("Pas OK");
