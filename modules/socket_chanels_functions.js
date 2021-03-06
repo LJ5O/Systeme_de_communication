@@ -60,8 +60,8 @@ module.exports = {
   delete_chanel: function(chanel_id, connection, socket, callback){
     //TODO : Vérifier les perms
     if(/^([0-9]{1,999999})$/.test(chanel_id)){//L'ID du chanel doit être un nombre
-
-      connection.query("DELETE FROM chanel WHERE id="+mysql.escape(chanel_id)+";", function(error, results, fields){
+      //Pour supprimer un chanel, il faut d'abord supprimer les données liées / clées étrangères
+      connection.query("DELETE FROM message WHERE chanel="+mysql.escape(chanel_id)+";DELETE FROM chanel WHERE id="+mysql.escape(chanel_id)+";", function(error, results, fields){
 
         //Gestion d'une erreur Mysql
         if(error instanceof Error){
