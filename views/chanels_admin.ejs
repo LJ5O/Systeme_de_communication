@@ -1,0 +1,170 @@
+<html>
+	<head>
+		<title>MODIFIER</title>
+		<link rel="stylesheet" type="text/css" href="/style">
+    <link rel="stylesheet" type="text/css" href="/style/app/chanels_admin">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+	</head>
+	<body>
+    <div id="central_div">
+
+			<div class="div_left_pane">
+				<a href="/app"><img src="/img/close.png" id="close"></a><!-- https://pixabay.com/fr/vectors/proches-abandonn%C3%A9-x-ic%C3%B4ne-1540630/ -->
+				<h3 align="center">Gestion des chanels</h3>
+				<img src="/img/add.png" id="add_chanel" class="pointer"> <!-- https://pixabay.com/fr/vectors/plus-ajouter-croix-ajout-5840717/ -->
+			</div>
+
+			<div class="chanels_div" id="chanels_list">
+
+				<!-- Div copiée par le JS pour ajouter un serveur -->
+				<div class="chanel" style="display: none;">
+					<h5 class="chanel_name">Channel name</h5>
+					<img src="/img/keyboard.png" class="text_chanel_image">
+					<input type="hidden" value="" class="chanel_description"></input>
+					<input type="hidden" value="" class="owner_id"></input>
+					<input type="hidden" value="" class="owner_name"></input>
+					<input type="hidden" value="" class="position"></input>
+				</div>
+
+			</div>
+
+			<div class="chanel_infos">
+				<h3 id="chanel_owner_h3"></h3>
+				<img src="/img/delete.png" id="delete_chanel" style="display: none;" class="pointer">
+
+				<form method="post" action="javascript:void(0);" id="chanel_form" style="display: none;">
+	          <input type="text" name="name" placeholder="Nom du chanel" required="required" maxlength="24" id="chanel_name_input" class="stylized_input"></input>
+						<input type="number" name="position" placeholder="Position du chanel" min="0" max="9999" id="chanel_position_input" class="stylized_input"></input>
+						<textarea name="desc" maxlength="512" form="chanel_form" id="chanel_desc_textarea">Description du chanel</textarea>
+						<div id="chanel_modify_submit_button_div">
+							<button type="submit" id="chanel_modify_submit_button" class="pointer">Valider</button>
+						</div>
+
+						<input type="hidden" name="new_chanel_created" id="new_chanel_created" value="true"><!-- Permet de dire au serveur si l'on crée un nouveau chanel, ou s'il s'agit d'une mise à jour -->
+
+				</form>
+
+			</div>
+
+			<div class="chanel_perms">
+			</div>
+
+    </div>
+		<!--<script src="/js/cookies"></script>-->
+		<script src="/socket.io/socket.io.js"></script><!--J'importe le script néccésaire au fonctionnement de socket.io -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script src="/js/chanels_list"></script><!-- Permet de gérer la liste des chanels, socket y est définit -->
+		<script type="text/javascript">
+
+		create_chanel_list();//Affiche la liste des chanels depuis la BDD
+
+		var selected_chanel;
+		function clear_selected_if_exist(){
+			if(selected_chanel!=undefined){
+				$(selected_chanel).css('background-color', 'rgba(61, 61, 61)');
+			}
+		}
+
+			//Click sur un chanel
+			$("#chanels_list").on('click', '.chanel', function(){//Je séléctionne la div, puis j'applique l'événement sur les enfants avec la classe "chanel" -> Permet de gérer des éléments ajoutés dynamiquement
+
+				create_new_chanel = false;
+				document.getElementById("new_chanel_created").value = false;//Utilisé pour le formulaire quand un nouveau chanel est créé
+				$("#delete_chanel").css("display", "block");//Affichage du bouton de suppression
+				$("#chanel_form").css("display", "block");
+
+				clear_selected_if_exist();
+
+				selected_chanel = this;
+				$(this).css('background-color', '#787878');
+				$("#chanel_name_input").val($(this).children('.chanel_name').text());//Les données du chanel sont copiées dans le formulaire
+				$("#chanel_position_input").val($(this).children('.position').val());
+				$("#chanel_desc_textarea").val($(this).children('.chanel_description').val());
+				$("#chanel_owner_h3").text("Propriétaire : "+$(this).children('.owner_name').val());
+
+			});
+
+			//Click sur le bouton de création de chanel
+			$("#add_chanel").click(function(){
+				clear_selected_if_exist();
+				$("#delete_chanel").css("display", "none");
+				$("#chanel_form").css("display", "block");
+
+				document.getElementById("new_chanel_created").value = true;
+				document.getElementById("chanel_name_input").value = "Nouveau chanel";
+				$("#chanel_desc_textarea").val("");
+				$("#chanel_owner_h3").text("Nouveau chanel");
+			});
+
+			//Events Socket.io
+
+			//Supression de chanel
+			$("#delete_chanel").click(function(){
+				socket.emit("delete_chanel", $(selected_chanel).attr("id").split("_")[1], (callback) => {
+					console.log("Status de la requête (suppression) : "+callback.status);
+					switch(callback.status){
+						case "OK":
+							//Rechargement de la liste des chanels
+							regen_chanel_list();
+							break;
+
+						case "Erreur":
+							alert(callback.info);
+							break;
+
+						default:
+							break;
+					}
+				});
+			})
+
+			//Création/modification de chanel
+			$("#chanel_modify_submit_button").click(function(){
+
+				if(document.getElementById("new_chanel_created").value=="true"){
+
+					socket.emit("create_chanel", document.getElementById("chanel_name_input").value, document.getElementById("chanel_desc_textarea").value, document.getElementById("chanel_position_input").value, (callback) => {
+						console.log("Status de la requête (création) : "+callback.status);
+
+						switch(callback.status){
+							case "OK":
+								//Rechargement de la liste des chanels
+								regen_chanel_list();
+								break;
+
+							case "Erreur":
+								alert(callback.info);
+								break;
+
+							default:
+								break;
+						}
+					});
+
+				}else{
+
+					socket.emit("update_chanel", document.getElementById("chanel_name_input").value, document.getElementById("chanel_desc_textarea").value, document.getElementById("chanel_position_input").value, $(selected_chanel).attr("id").split("_")[1], (callback) => {
+						console.log("Status de la requête (modification) : "+callback.status);
+
+						switch(callback.status){
+							case "OK":
+								//Rechargement de la liste des chanels
+								regen_chanel_list();
+								alert("Chanel modifié !");
+								break;
+
+							case "Erreur":
+								alert(callback.info);
+								break;
+
+							default:
+								break;
+						}
+
+					});
+				}
+			});
+
+		</script>
+	</body>
+</html>
