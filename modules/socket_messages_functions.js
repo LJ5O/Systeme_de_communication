@@ -76,7 +76,6 @@ module.exports = {
           });
 
         }else{
-          console.log(results);
           callback({
             status: "OK",
             message_id: results.insertId
