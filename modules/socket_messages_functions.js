@@ -80,7 +80,7 @@ module.exports = {
             status: "OK",
             message_id: results.insertId
           });
-          io.to(get_client_chanel(socket)).emit("recive_message", message, get_client_name(socket), results.insertId);
+          io.to(get_client_chanel(socket)).emit("recive_message", get_client_name(socket), message, results.insertId);
         }
       });
 
